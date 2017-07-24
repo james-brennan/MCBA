@@ -1,0 +1,8 @@
+#!/bin/bash
+#BSUB -J Sensitivty[1-10000]
+#BSUB -oo /home/users/jbrennan01/DATA2/MCBA/logs/R-%J-%I.o
+#BSUB -eo /home/users/jbrennan01/DATA2/MCBA/logs/R-%J-%I.e 
+#BSUB -q short-serial
+#BSUB -W 00:08
+jobid=2
+python run.py $jobid $LSB_JOBINDEX 

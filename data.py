@@ -52,7 +52,7 @@ def simpleExperiment(C=np.ones(7), PsPs=0.5, PcPc=0.5):
     """
     * -- Load the data --*
     """
-    refl, hs, truedob = _load()
+    iso, hs, truedob = _load_truth()
 
     """
     *-- cloudiness model --*
@@ -91,26 +91,16 @@ def simpleExperiment(C=np.ones(7), PsPs=0.5, PcPc=0.5):
     Model here is that noise is Gaussian and independently
     drawn per pixel per day per waveband... a BIG assumption
 
-    The MODIS sdr characterisation is used a central value
-    """
-    err = np.array([0.004, 0.015, 0.003, 0.004, 0.013, 0.010, 0.006])
+    The MODIS sdr characterisation is used as a central value.
 
-    xsize = 200
-    ysize = 300
-    noise_ = np.zeros((7, 366, xsize, ysize))
-    for band in xrange(7):
-        bnoise_ = np.random.normal(0, C[band]*err[band], size=(366, xsize, ysize))
-        noise_[band] = bnoise_
-    # return it
-    noise_ =  np.swapaxes(noise_, 0,1)
-
-    """
     to keep the memory requirement down we do this only along
     time in a loop.
 
     This may take awhile...
     """
-
+    err = np.array([0.004, 0.015, 0.003, 0.004, 0.013, 0.010, 0.006])
+    xsize = 200
+    ysize = 300
     noise_ = np.zeros((7, 366))
     for x in xrange(xsize):
         for y in xrange(ysize):
@@ -123,8 +113,27 @@ def simpleExperiment(C=np.ones(7), PsPs=0.5, PcPc=0.5):
             iso[:, :, x, y] += noise_.T
 
 
+
+    """
+    Apply the qa to the data
+    """
+
+
+    qa = np.zeros((366, 7, 200, 300)).astype(bool)
+
+    for x in xrange(xsize):
+        for y in xrange(ysize):
+            qa[:, :, x, y]=clear[:, None]
+    """
+    also mask where water etc
+    """
+    waterMask = iso !=-999
+    qa = np.logical_and(qa,  waterMask)
+    iso = np.ma.MaskedArray(data=iso, mask=~qa)
+
     """
     Done now return the observations, hotspots and
     qa field
     """
     return iso, clear, hs
+
